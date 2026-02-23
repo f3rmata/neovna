@@ -20,10 +20,8 @@
 
 float S11_amp[SWEEP_POINT];   // S11 幅度
 float S11_phase[SWEEP_POINT]; // S11 相位
-float S21_amp[SWEEP_POINT];   // S11 幅度
-
-// float S21_amp[SWEEP_POINT];   // S21 幅度
-// float S21_phase[SWEEP_POINT]; // S21 相位
+float S21_amp[SWEEP_POINT];   // S21 幅度
+float S21_phase[SWEEP_POINT]; // S21 相位
 
 // 生成线性扫描频点
 void generate_sweep_freq(float start_freq, float end_freq, uint16_t points,
@@ -86,7 +84,7 @@ void calc_s11(float *incidentf, float *reflectf, float *s11_amp,
 
 void calc_s11_iq(float *incidentf, float *reflectf, float *transmissionf,
                  uint16_t sample_length, float *s11_amp, float *s11_phase,
-                 float *s21_amp) {
+                 float *s21_amp, float *s21_phase) {
 
   remove_dc(incidentf, sample_length);
   remove_dc(reflectf, sample_length);
@@ -119,16 +117,21 @@ void calc_s11_iq(float *incidentf, float *reflectf, float *transmissionf,
 
   double phase1 = atan2(Im1, Re1);
   double phase2 = atan2(Im2, Re2);
+  double phase3 = atan2(Im3, Re3);
 
-  double delta_phase = unwrap_phase(phase1, phase2);
+  double delta_phase_12 = unwrap_phase(phase1, phase2);
+  double delta_phase_13 = unwrap_phase(phase1, phase3);
 
   double amp1 = sqrt(Re1 * Re1 + Im1 * Im1);
   double amp2 = sqrt(Re2 * Re2 + Im2 * Im2);
   double amp3 = sqrt(Re3 * Re3 + Im3 * Im3);
 
   *s11_amp = amp2 / amp1; // 线性幅度
-  *s11_phase = delta_phase;
+  *s11_phase = delta_phase_12;
   *s21_amp = amp3 / amp1;
+  if (s21_phase) {
+    *s21_phase = delta_phase_13;
+  }
 }
 
 double estimate_cable_length(float *sweep_freq, float *amp, float *phase,
@@ -268,12 +271,13 @@ float S11_S21_sweep(AD7606_Handler *ad7606, int32_t lo_hz, int32_t start_hz,
     // calc_s11(incidentf, reflectf, S11_amp + i - 1, S11_phase + i - 1);
 
     calc_s11_iq(incidentf, reflectf, transmissionf, SAMPLE_POINT,
-                S11_amp + i - 1, S11_phase + i - 1, S21_amp + i - 1);
+                S11_amp + i - 1, S11_phase + i - 1, S21_amp + i - 1,
+                S21_phase + i - 1);
 
     uartprint(&huart2,
-              "sweep_freq_khz, s11_amp, s11_phase, s21_amp: %f, %f, %f, %f\n",
+              "sweep_freq_khz, s11_amp, s11_phase, s21_amp, s21_phase: %f, %f, %f, %f, %f\n",
               sweep_fre[i] / 1000, S11_amp[i - 1], S11_phase[i - 1],
-              S21_amp[i - 1]);
+              S21_amp[i - 1], S21_phase[i - 1]);
 
     // HAL_Delay(20);
   }
@@ -334,12 +338,13 @@ float S11_S21_sweep_shield(AD7606_Handler *ad7606, int32_t lo_hz,
     // calc_s11(incidentf, reflectf, S11_amp + i - 1, S11_phase + i - 1);
 
     calc_s11_iq(incidentf, reflectf, transmissionf, SAMPLE_POINT,
-                S11_amp + i - 1, S11_phase + i - 1, S21_amp + i - 1);
+                S11_amp + i - 1, S11_phase + i - 1, S21_amp + i - 1,
+                S21_phase + i - 1);
 
     uartprint(&hlpuart1,
-              "sweep_freq_khz, s11_amp, s11_phase, s21_amp: %f, %f, %f,%f\n",
+              "sweep_freq_khz, s11_amp, s11_phase, s21_amp, s21_phase: %f, %f, %f, %f, %f\n",
               sweep_fre[i] / 1000, S11_amp[i - 1], S11_phase[i - 1],
-              S21_amp[i - 1]);
+              S21_amp[i - 1], S21_phase[i - 1]);
 
     // HAL_Delay(20);
   }
