@@ -7,8 +7,6 @@ A simple STM32-based Vector Network Analyzer (VNA) for the 2025 NUEDC D task.
 - ADC: AD7606B (16‑bit)
 - DSP: CMSIS-DSP
 
-本项目现已加入 SOLT 标定（短路/开路/负载/直通）支持，用于对测得的 S11/S21 进行误差修正。
-
 ## Features
 
 - Fast frequency sweep with Si5351
